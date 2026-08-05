@@ -90,9 +90,31 @@ public class UIManager : MonoBehaviour
 
   [SerializeField] private AudioController audioController;
   [SerializeField] private Button skipwinButton;
+  [SerializeField] private JSFunctCalls jsFunctCalls;
   internal bool IsQuitSelf =false;
 
   [SerializeField] internal GameObject SelectionIndicatorObject;
+
+  private void Awake()
+  {
+    if (jsFunctCalls != null)
+      jsFunctCalls.RegisterVisibilityListener(gameObject.name);
+  }
+
+  public void OnFocusChanged(string value)
+  {
+    bool focused = value == "1";
+    Debug.Log("UNITY FOCUS CHANGED: " + value + " (focused: " + focused + ")");
+    audioController?.SetMuteAll(!focused);
+    socketManager?.HandleFocusChange(focused);
+  }
+
+  internal void RefreshBalanceDisplay()
+  {
+    BalanceAmt_Text.text = socketManager.playerdata.balance.ToString("F2");
+    if (socketManager.playerdata.balance < socketManager.initialData.bets[KenoManager.betCounter])
+      LowBalancePopupEnable();
+  }
 
   void Start()
   {

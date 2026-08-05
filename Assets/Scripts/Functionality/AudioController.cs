@@ -10,6 +10,19 @@ public class AudioController : MonoBehaviour
     public AudioSource MainAudioSource;
     public AudioSource ButtonaudioSource;
     public AudioSource KenoAudioSource;
+
+    private readonly List<AudioSource> allSources = new List<AudioSource>();
+    private readonly Dictionary<AudioSource, bool> preFocusMuteState = new Dictionary<AudioSource, bool>();
+    private bool isForceMuted = false;
+
+    void Awake()
+    {
+        allSources.Add(BgAudioSource);
+        allSources.Add(MainAudioSource);
+        allSources.Add(ButtonaudioSource);
+        allSources.Add(KenoAudioSource);
+    }
+
     void Start()
     {
         BgAudioSource.Play();
@@ -81,35 +94,46 @@ public class AudioController : MonoBehaviour
     // }
     public void ToggleBgSound(bool isOn)
     {
-        if (isOn)
-        {
-
-            BgAudioSource.Play();
-            BgAudioSource.mute = false;
-        }
-        else
-        {
-            BgAudioSource.mute = true;
-        }
+        if (isOn) BgAudioSource.Play();
+        bool mute = !isOn;
+        if (isForceMuted) preFocusMuteState[BgAudioSource] = mute;
+        else BgAudioSource.mute = mute;
     }
 
     public void ToggleMainSound(bool isOn)
     {
-        if (isOn)
+        bool mute = !isOn;
+        foreach (var src in new[] { MainAudioSource, ButtonaudioSource, KenoAudioSource })
         {
-
-            MainAudioSource.mute = false;
-            ButtonaudioSource.mute = false;
-            KenoAudioSource.mute = false;
-
-
+            if (isForceMuted) preFocusMuteState[src] = mute;
+            else src.mute = mute;
         }
-        else
+    }
+
+    // Focus-driven — called from BOTH UIManager.OnFocusChanged (WebGL/JS path) and OnApplicationFocus below.
+    internal void SetMuteAll(bool forceMute)
+    {
+        if (forceMute == isForceMuted) return;
+        isForceMuted = forceMute;
+
+        foreach (var source in allSources)
         {
-            MainAudioSource.mute = true;
-            ButtonaudioSource.mute = true;
-            KenoAudioSource.mute = true;
-
+            if (source == null) continue;
+            if (forceMute)
+            {
+                preFocusMuteState[source] = source.mute;
+                source.mute = true;
+            }
+            else
+            {
+                source.mute = preFocusMuteState.TryGetValue(source, out bool prevMuted) ? prevMuted : source.mute;
+            }
         }
+    }
+
+    // Native/editor focus path — calls the SAME method the WebGL OnFocusChanged path calls.
+    private void OnApplicationFocus(bool focus)
+    {
+        SetMuteAll(!focus);
     }
 }
