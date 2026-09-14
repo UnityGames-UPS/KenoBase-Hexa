@@ -2,9 +2,7 @@ mergeInto(LibraryManager.library, {
     // Outbound: Unity -> iframe host, as { type, data } via window.parent.postMessage.
     SendPostMessage: function(messagePtr) {
       var message = UTF8ToString(messagePtr);
-      console.log('Unity sending msg (before if): ', message);
       if (typeof window !== "undefined" && window.parent && typeof window.parent.postMessage === "function") {
-        console.log('Unity sending msg (after if): ', message);
         window.parent.postMessage({ type: message, data: {} }, "*");
       }
     },
