@@ -176,7 +176,7 @@ public class SocketIOManager : MonoBehaviour
     gameSocket.On<bool>("socketState", OnSocketState);
     gameSocket.On<string>("internalError", OnSocketError);
     gameSocket.On<string>("alert", OnSocketAlert);
-    gameSocket.On<string>("pong", OnPongReceived);
+    gameSocket.On("pong", OnPongReceived);
     gameSocket.On<string>("AnotherDevice", OnSocketOtherDevice);
     gameSocket.On<string>("balance:sync", OnBalanceSync);
     manager.Open();
@@ -211,7 +211,7 @@ public class SocketIOManager : MonoBehaviour
     }
     ResetPingRoutine();
   } //Back2 end
-  private void OnPongReceived(string data) //Back2 Start
+  private void OnPongReceived() //Back2 Start
   {
     // Debug.Log("✅ Received pong from server.");
     waitingForPong = false;
